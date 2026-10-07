@@ -1,0 +1,1 @@
+# skywatcher-polar-alignment-tool
