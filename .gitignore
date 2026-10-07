@@ -1,0 +1,25 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node.js (テスト実行用)
+node_modules/
+npm-debug.log*
+.npm/
+
+# Python (ローカルサーバー / 検証スクリプト用)
+__pycache__/
+*.py[oc]
+.venv/
+
+# Logs / temporary files
+*.log
+*.tmp
+.cache/

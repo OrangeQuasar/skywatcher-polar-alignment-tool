@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>極軸望遠鏡ガイド</title>
+  <meta name="description" content="Sky-Watcher 製極軸望遠鏡のための北極星の時角計算ツール。歳差・章動・光行差を考慮した視位置をレチクル上に表示します。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23c33' stroke-width='2'/%3E%3Cpath d='M16 3v26M3 16h26' stroke='%23c33' stroke-width='1.5'/%3E%3Ccircle cx='22' cy='9' r='3' fill='%23fc6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>極軸望遠鏡ガイド <span class="sub">for Sky-Watcher</span></h1>
+    <label class="toggle"><input type="checkbox" id="night-mode"> 暗視モード</label>
+  </header>
+
+  <main class="layout">
+    <section class="panel controls" aria-label="入力">
+      <h2>観測地と日時</h2>
+      <div class="field-row">
+        <label>緯度 (北+ / 南−)
+          <input id="lat" type="number" step="0.0001" min="-90" max="90" value="35.6812" inputmode="decimal">
+        </label>
+        <label>経度 (東+ / 西−)
+          <input id="lon" type="number" step="0.0001" min="-180" max="180" value="139.7671" inputmode="decimal">
+        </label>
+      </div>
+      <button type="button" id="geolocate" class="btn">📍 現在地を取得</button>
+
+      <label class="block">日時（端末のタイムゾーン）
+        <input id="datetime" type="datetime-local" step="1">
+      </label>
+      <div class="btn-row">
+        <button type="button" class="btn small" data-shift="-60">−1時間</button>
+        <button type="button" class="btn small" data-shift="-10">−10分</button>
+        <button type="button" class="btn small" data-shift="10">+10分</button>
+        <button type="button" class="btn small" data-shift="60">+1時間</button>
+        <button type="button" id="now" class="btn small primary">現在</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="live" checked> 現在時刻に追従</label>
+      <label class="toggle"><input type="checkbox" id="inverted" checked> 極望の倒立像で表示</label>
+      <p id="status" class="status" role="status"></p>
+    </section>
+
+    <section class="panel results" aria-label="計算結果">
+      <h2><span id="star-name">北極星</span>の位置</h2>
+      <div class="hero">
+        <div>
+          <div class="hero-label">時角 (視位置)</div>
+          <div class="hero-value" id="out-ha">--</div>
+          <div class="hero-sub" id="out-ha-deg"></div>
+        </div>
+        <div>
+          <div class="hero-label">レチクル時計位置</div>
+          <div class="hero-value" id="out-clock">--</div>
+          <div class="hero-sub" id="out-clock-desc"></div>
+        </div>
+      </div>
+      <dl class="details">
+        <div id="ring-row"><dt>3重円の目安</dt><dd id="out-ring"></dd></div>
+        <div><dt>極からの距離</dt><dd><span id="out-pd"></span> <span class="muted" id="out-pd-arcmin"></span></dd></div>
+        <div><dt>視赤経</dt><dd id="out-ra"></dd></div>
+        <div><dt>視赤緯</dt><dd id="out-dec"></dd></div>
+        <div><dt>地方視恒星時</dt><dd id="out-lst"></dd></div>
+        <div><dt>計算時刻</dt><dd id="out-utc"></dd></div>
+        <div><dt>元期</dt><dd id="out-epoch"></dd></div>
+      </dl>
+    </section>
+
+    <section class="panel scope" aria-label="レチクル表示">
+      <h2>極望の視野</h2>
+      <svg id="reticle" class="reticle" role="img" aria-label="極軸望遠鏡のレチクルと星の位置"></svg>
+      <p class="caption" id="view-caption"></p>
+    </section>
+
+    <section class="panel zoom-panel" id="zoom-wrap" aria-label="拡大図">
+      <h2>歳差による位置の変化</h2>
+      <svg id="zoom" class="zoom" role="img" aria-label="北極星周辺の拡大図"></svg>
+      <p class="caption">北極星付近を拡大し、極の方向を上にした図。目盛りは各年 1 月 1 日の北極星の極距離（歳差・固有運動による）で、円はレチクルの 2012 / 2020 / 2028 年円です。</p>
+    </section>
+
+    <section class="panel notes">
+      <h2>使い方と計算方法</h2>
+      <ol>
+        <li>赤道儀の極軸を北（南半球では南）へ向け、赤経軸を回してレチクルの <b>0</b> が真上に来るようにします。</li>
+        <li>表示された「レチクル時計位置」（例: 7:20 なら 7 と 8 の間）に、北極星を合わせます。</li>
+        <li>半径方向は「3重円の目安」を参考に、該当する年の円の間に置きます。</li>
+      </ol>
+      <ul class="method">
+        <li>恒星位置: J2000.0 カタログ値 + 固有運動</li>
+        <li>歳差: IAU 2006 (P03)、章動: IAU 1980 主要 18 項、年周光行差を補正</li>
+        <li>恒星時: 地球回転角 (ERA) から GMST (IAU 2006) と分点差で視恒星時を算出（UT1 ≈ UTC、TT − UTC = 69.184 秒）</li>
+        <li>時角 = 地方視恒星時 − 視赤経。大気差は考慮していません。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    すべての計算はブラウザ内で行われます。
+  </footer>
+</body>
+</html>
